@@ -41,8 +41,15 @@
         const API_URL = '/api';
         
         async function loadHistory() {
+            const currentDeviceId = localStorage.getItem('cortex_device_id');
+            if(!currentDeviceId) {
+                document.getElementById('receipt-list').innerHTML = '<div class="text-center text-gray-500 py-10 w-full col-span-2">Please pair a band on the Cart page to see your receipts.</div>';
+                return;
+            }
+
             try {
-                const res = await fetch(API_URL + '/history');
+                const res = await fetch(API_URL + '/history?deviceId=' + currentDeviceId);
+                if(!res.ok) throw new Error("API Error");
                 const history = await res.json();
                 
                 const list = document.getElementById('receipt-list');
@@ -82,7 +89,7 @@
                 
             } catch (err) {
                 console.error(err);
-                document.getElementById('receipt-list').innerHTML = '<div class="text-red-500 text-center py-4 w-full">Error loading receipts</div>';
+                document.getElementById('receipt-list').innerHTML = '<div class="text-red-500 text-center py-4 w-full">Error loading receipts. Ensure you are paired.</div>';
             }
         }
         

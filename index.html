@@ -96,13 +96,25 @@
         const totalContainer = document.getElementById('cart-total');
         const countContainer = document.getElementById('item-count');
         
+        // Persistent device pairing
+        let currentDeviceId = localStorage.getItem('cortex_device_id');
+        
+        // If not paired, automatically show modal on load
+        if(!currentDeviceId) {
+            document.getElementById('pair-modal').classList.remove('hidden');
+        }
+
         async function fetchCart() {
+            if (!currentDeviceId) return; // Wait for pairing
+            
             try {
-                const response = await fetch(API_URL + '/cart');
+                const response = await fetch(API_URL + '/cart?deviceId=' + currentDeviceId);
+                if(!response.ok) throw new Error("API Error");
                 const cartData = await response.json();
                 renderCart(cartData);
             } catch (error) {
                 console.error(error);
+                cartContainer.innerHTML = `<div class="text-center text-red-500 py-10">Error connecting to cart.</div>`;
             }
         }
 
@@ -148,12 +160,17 @@
         fetchCart();
 
         document.getElementById('checkout-btn').addEventListener('click', () => {
+            if(!currentDeviceId) return alert("Please pair a band first!");
             document.getElementById('checkout-modal').classList.remove('hidden');
         });
 
         document.getElementById('close-modal-btn').addEventListener('click', async () => {
             try {
-                await fetch(API_URL + '/cart/checkout', { method: 'POST' });
+                await fetch(API_URL + '/cart/checkout', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deviceId: currentDeviceId })
+                });
                 document.getElementById('checkout-modal').classList.add('hidden');
                 fetchCart();
             } catch (err) {
@@ -162,11 +179,14 @@
         });
         
         function pairBand() {
-            const code = document.getElementById('pair-code-input').value;
+            const code = document.getElementById('pair-code-input').value.trim().toUpperCase();
             if(code.length === 6) {
+                localStorage.setItem('cortex_device_id', code);
+                currentDeviceId = code;
                 alert("Pairing request sent! Start scanning items with your band.");
                 document.getElementById('pair-modal').classList.add('hidden');
                 document.getElementById('pair-code-input').value = "";
+                fetchCart(); // Instantly load this device's cart
             } else {
                 alert("Please enter the full 6-character code printed on your device.");
             }
