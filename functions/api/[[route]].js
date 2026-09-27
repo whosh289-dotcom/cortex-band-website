@@ -74,6 +74,54 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ status: "success", productName: product.name, price: product.price, cartTotal: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
+      if (request.method === "POST" && url.pathname === "/api/cart/create-checkout-session") {
+        const body = await request.json();
+        const deviceId = body.deviceId;
+        if(!deviceId) return new Response(JSON.stringify({ error: "Missing deviceId" }), { status: 400, headers: corsHeaders });
+
+        let cartData = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || { items: [] };
+        if (Array.isArray(cartData)) cartData = { items: cartData };
+
+        if (!cartData.items || cartData.items.length === 0) {
+            return new Response(JSON.stringify({ error: "Cart is empty" }), { status: 400, headers: corsHeaders });
+        }
+
+        if (!env.STRIPE_SECRET_KEY) {
+            return new Response(JSON.stringify({ error: "Stripe Secret Key not configured in Cloudflare." }), { status: 500, headers: corsHeaders });
+        }
+
+        // Stripe expects form-urlencoded data for its REST API
+        const stripeParams = new URLSearchParams();
+        stripeParams.append('success_url', `${url.origin}/index.html?success=true`);
+        stripeParams.append('cancel_url', `${url.origin}/index.html?canceled=true`);
+        stripeParams.append('mode', 'payment');
+
+        cartData.items.forEach((item, index) => {
+            stripeParams.append(`line_items[${index}][price_data][currency]`, 'usd');
+            stripeParams.append(`line_items[${index}][price_data][product_data][name]`, item.name);
+            stripeParams.append(`line_items[${index}][price_data][unit_amount]`, Math.round(item.price * 100)); // Stripe uses cents
+            stripeParams.append(`line_items[${index}][quantity]`, item.quantity);
+        });
+
+        // Call Stripe API directly
+        const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: stripeParams.toString()
+        });
+
+        const session = await stripeRes.json();
+        
+        if (session.error) {
+            return new Response(JSON.stringify({ error: session.error.message }), { status: 400, headers: corsHeaders });
+        }
+
+        return new Response(JSON.stringify({ url: session.url }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       if (request.method === "POST" && url.pathname === "/api/cart/checkout") {
         const body = await request.json();
         const deviceId = body.deviceId;
