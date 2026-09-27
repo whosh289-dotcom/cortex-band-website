@@ -36,9 +36,11 @@ export async function onRequest(context) {
         const deviceId = url.searchParams.get("deviceId");
         if(!deviceId) return new Response(JSON.stringify({ error: "Missing deviceId" }), { status: 400, headers: corsHeaders });
 
-        let cart = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || [];
-        let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        return new Response(JSON.stringify({ items: cart, total: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        let cartData = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || { items: [], addHistory: [], isFrozen: false };
+        if (Array.isArray(cartData)) cartData = { items: cartData, addHistory: [], isFrozen: false }; // Backwards compatibility
+
+        let total = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        return new Response(JSON.stringify({ items: cartData.items, total: total, isFrozen: cartData.isFrozen }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       if (request.method === "POST" && url.pathname === "/api/cart/add") {
@@ -48,6 +50,27 @@ export async function onRequest(context) {
         
         if(!deviceId || !barcode) return new Response(JSON.stringify({ error: "Missing payload" }), { status: 400, headers: corsHeaders });
 
+        // 1. Account Security & Rate Limiting Check
+        let cartData = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || { items: [], addHistory: [], isFrozen: false };
+        if (Array.isArray(cartData)) cartData = { items: cartData, addHistory: [], isFrozen: false };
+
+        if (cartData.isFrozen) {
+            return new Response(JSON.stringify({ status: "error", error: "ACCOUNT FROZEN: Suspicious activity detected." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const now = Date.now();
+        // Filter history to only keep timestamps from the last 60,000 ms (1 minute)
+        cartData.addHistory = (cartData.addHistory || []).filter(time => now - time < 60000);
+        cartData.addHistory.push(now);
+
+        // Security trigger: Freeze account if more than 1000 scans per minute
+        if (cartData.addHistory.length >= 1000) {
+            cartData.isFrozen = true;
+            await env.CART_KV.put(`active_cart_${deviceId}`, JSON.stringify(cartData));
+            return new Response(JSON.stringify({ status: "error", error: "ACCOUNT FROZEN: 1000 scans/min exceeded." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        // 2. Add Product Logic
         let products = await env.CART_KV.get("product_catalog", "json") || [];
         const product = products.find(p => p.barcode === barcode);
         
@@ -55,16 +78,15 @@ export async function onRequest(context) {
           return new Response(JSON.stringify({ status: "error", error: "Product not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
-        let cart = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || [];
-        const existingItemIndex = cart.findIndex(item => item.barcode === barcode);
+        const existingItemIndex = cartData.items.findIndex(item => item.barcode === barcode);
         if (existingItemIndex > -1) {
-          cart[existingItemIndex].quantity += 1;
+          cartData.items[existingItemIndex].quantity += 1;
         } else {
-          cart.push({ barcode: barcode, ...product, quantity: 1 });
+          cartData.items.push({ barcode: barcode, ...product, quantity: 1 });
         }
 
-        await env.CART_KV.put(`active_cart_${deviceId}`, JSON.stringify(cart));
-        let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        await env.CART_KV.put(`active_cart_${deviceId}`, JSON.stringify(cartData));
+        let total = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
         return new Response(JSON.stringify({ status: "success", productName: product.name, price: product.price, cartTotal: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -74,11 +96,17 @@ export async function onRequest(context) {
         const deviceId = body.deviceId;
         if(!deviceId) return new Response(JSON.stringify({ error: "Missing deviceId" }), { status: 400, headers: corsHeaders });
 
-        let cart = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || [];
-        if (cart.length > 0) {
+        let cartData = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || { items: [], addHistory: [], isFrozen: false };
+        if (Array.isArray(cartData)) cartData = { items: cartData, addHistory: [], isFrozen: false };
+
+        if (cartData.isFrozen) {
+            return new Response(JSON.stringify({ status: "error", error: "Cannot checkout, account is frozen." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (cartData.items.length > 0) {
             let history = await env.CART_KV.get(`order_history_${deviceId}`, "json") || [];
-            let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            history.push({ id: Date.now(), date: new Date().toISOString(), items: cart, total: total });
+            let total = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            history.push({ id: Date.now(), date: new Date().toISOString(), items: cartData.items, total: total });
             await env.CART_KV.put(`order_history_${deviceId}`, JSON.stringify(history));
             await env.CART_KV.delete(`active_cart_${deviceId}`);
         }
