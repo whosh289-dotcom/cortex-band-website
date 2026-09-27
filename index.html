@@ -201,20 +201,34 @@
         });
         
         async function pairBand() {
-            const code = document.getElementById('pair-code-input').value.trim().toUpperCase();
-            if(code.length < 6) return alert("Please enter the 6-character code.");
+            const codeInput = document.getElementById('pair-code-input');
+            const code = codeInput.value.trim().toUpperCase();
+            if (code.length < 6) return alert('Please enter the 6-character code.');
+            const btn = document.querySelector('#pair-modal button[onclick*="pairBand()"]');
+            // Disable button to prevent double submissions
+            if (btn) btn.disabled = true;
             try {
                 const res = await fetch(API_URL + '/band/pair', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ deviceId: code })
                 });
-                if(res.ok) {
+                if (res.ok) {
                     localStorage.setItem('cortex_device_id', code);
                     document.getElementById('pair-modal').classList.add('hidden');
+                    codeInput.value = '';
                     fetchCart();
-                } else alert("Error pairing device with server.");
-            } catch(e) { alert("Network error."); }
+                } else {
+                    // Try to extract server-provided error message
+                    let errMsg = 'Error pairing device with server.';
+                    try { const data = await res.json(); if (data.error) errMsg = data.error; } catch (_) {}
+                    alert(errMsg);
+                }
+            } catch (e) {
+                alert('Network error.');
+            }
+            if (btn) btn.disabled = false;
+        }
         }
 
         document.getElementById('checkout-btn').addEventListener('click', async () => {
