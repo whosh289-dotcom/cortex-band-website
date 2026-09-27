@@ -191,12 +191,26 @@
             }
         });
         
-        function pairBand() {
+        async function pairBand() {
             const code = document.getElementById('pair-code-input').value.trim().toUpperCase();
             if(code.length < 6) return alert("Please enter the 6-character code.");
-            localStorage.setItem('cortex_device_id', code);
-            document.getElementById('pair-modal').classList.add('hidden');
-            fetchCart();
+            
+            try {
+                const res = await fetch(API_URL + '/band/pair', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deviceId: code })
+                });
+                if(res.ok) {
+                    localStorage.setItem('cortex_device_id', code);
+                    document.getElementById('pair-modal').classList.add('hidden');
+                    fetchCart();
+                } else {
+                    alert("Error pairing device with server.");
+                }
+            } catch(e) {
+                alert("Network error.");
+            }
         }
 
         document.getElementById('checkout-btn').addEventListener('click', async () => {
