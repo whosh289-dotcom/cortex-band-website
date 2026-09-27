@@ -58,48 +58,37 @@ export async function onRequest(context) {
         let products = await env.CART_KV.get("product_catalog", "json") || [];
         let product = products.find(p => p.barcode === barcode);
         
-        // 2. If not found locally, query Global UPC Databases!
+        // 2. If not found locally, query Global UPC Databases to give a helpful error
         if (!product) {
             let globalName = "Unknown Product";
             
-            // Try UPCItemDB (Great for electronics, books, general items)
             try {
                 const upcRes = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
                 if (upcRes.ok) {
                     const upcData = await upcRes.json();
-                    if (upcData.items && upcData.items.length > 0) {
-                        globalName = upcData.items[0].title;
-                    }
+                    if (upcData.items && upcData.items.length > 0) globalName = upcData.items[0].title;
                 }
-            } catch (e) { console.error("UPCItemDB error"); }
+            } catch (e) {}
 
-            // Try Open Food Facts (Great for groceries and snacks) if UPCItemDB failed
             if (globalName === "Unknown Product") {
                 try {
                     const offRes = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
                     if (offRes.ok) {
                         const offData = await offRes.json();
-                        if (offData.status === 1 && offData.product && offData.product.product_name) {
-                            globalName = offData.product.product_name;
-                        }
+                        if (offData.status === 1 && offData.product && offData.product.product_name) globalName = offData.product.product_name;
                     }
-                } catch (e) { console.error("OpenFoodFacts error"); }
+                } catch (e) {}
             }
             
-            // If completely unknown, reject the scan
-            if (globalName === "Unknown Product") {
-                return new Response(JSON.stringify({ status: "error", error: "Item not recognized globally or locally." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            if (globalName !== "Unknown Product") {
+                // REAL MODE: We know what it is, but the store hasn't set a price. Reject it!
+                return new Response(JSON.stringify({ status: "error", error: `Found '${globalName.substring(0, 20)}...', but this store hasn't set a price for it.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            } else {
+                return new Response(JSON.stringify({ status: "error", error: "Barcode not recognized locally or globally." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
             }
-            
-            // Generate a consistent "Mock Price" for the demo based on the barcode string
-            let numericVal = parseInt(barcode.slice(-3)) || 599;
-            let mockPrice = (numericVal % 1000) / 100.0;
-            if (mockPrice < 1.00) mockPrice += 3.99; // Ensure no $0 items
-            
-            product = { name: globalName, price: mockPrice };
         }
 
-        // Add Product to Cart
+        // Add Product to Cart (Only happens if it exists in the Store's KV Catalog with a real price)
         const existingItemIndex = cartData.items.findIndex(item => item.barcode === barcode);
         if (existingItemIndex > -1) {
           cartData.items[existingItemIndex].quantity += 1;
@@ -111,6 +100,7 @@ export async function onRequest(context) {
         let total = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
         return new Response(JSON.stringify({ status: "success", productName: product.name, price: product.price.toFixed(2), cartTotal: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
 
       }
 
