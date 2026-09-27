@@ -30,6 +30,31 @@ export async function onRequest(context) {
       }
 
       // ==========================================
+      // ADMIN API
+      // ==========================================
+      if (request.method === "POST" && url.pathname === "/api/admin/setup") {
+          const body = await request.json();
+          if (body.storeId && body.stripeKey) {
+              await env.CART_KV.put(`stripe_key_${body.storeId}`, body.stripeKey);
+              return new Response(JSON.stringify({ status: "success" }), { headers: corsHeaders });
+          }
+          return new Response("Bad Request", { status: 400, headers: corsHeaders });
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/admin/catalog") {
+          const body = await request.json();
+          if (body.storeId && body.barcode && body.name && body.price !== undefined) {
+              let catalog = await env.CART_KV.get(`catalog_${body.storeId}`, "json") || [];
+              const idx = catalog.findIndex(p => p.barcode === body.barcode);
+              if (idx > -1) catalog[idx] = { barcode: body.barcode, name: body.name, price: body.price };
+              else catalog.push({ barcode: body.barcode, name: body.name, price: body.price });
+              await env.CART_KV.put(`catalog_${body.storeId}`, JSON.stringify(catalog));
+              return new Response(JSON.stringify({ status: "success" }), { headers: corsHeaders });
+          }
+          return new Response("Bad Request", { status: 400, headers: corsHeaders });
+      }
+
+      // ==========================================
       // CART API
       // ==========================================
       if (request.method === "GET" && url.pathname === "/api/cart") {
@@ -50,15 +75,23 @@ export async function onRequest(context) {
         
         if(!deviceId || !barcode) return new Response(JSON.stringify({ error: "Missing payload" }), { status: 400, headers: corsHeaders });
 
+        // --- STORE CHECK-IN LOGIC ---
+        if (barcode.startsWith("STORE-CHECKIN-")) {
+            const newStoreId = barcode.replace("STORE-CHECKIN-", "");
+            await env.CART_KV.put(`device_store_${deviceId}`, newStoreId);
+            // Clear their cart when they enter a new store
+            await env.CART_KV.put(`active_cart_${deviceId}`, JSON.stringify({ items: [] }));
+            return new Response(JSON.stringify({ status: "success", productName: `Checked into ${newStoreId}`, price: "0.00", cartTotal: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
         let cartData = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || { items: [] };
         if (Array.isArray(cartData)) cartData = { items: cartData };
 
         // --- MULTI-STORE ROUTING ---
-        // 1. Find out which store this band belongs to
+        // 1. Find out which store this band is currently checked into
         let storeId = await env.CART_KV.get(`device_store_${deviceId}`);
         if (!storeId) {
-            storeId = "demo_store"; // Auto-assign to demo store for testing
-            await env.CART_KV.put(`device_store_${deviceId}`, storeId);
+            return new Response(JSON.stringify({ status: "error", error: "Please scan a Store Check-In Barcode first!" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
         // 2. Check that specific store's catalog
