@@ -53,12 +53,19 @@ export async function onRequest(context) {
         let cartData = await env.CART_KV.get(`active_cart_${deviceId}`, "json") || { items: [] };
         if (Array.isArray(cartData)) cartData = { items: cartData };
 
-        // Add Product Logic
-        // 1. Check local store catalog first
-        let products = await env.CART_KV.get("product_catalog", "json") || [];
+        // --- MULTI-STORE ROUTING ---
+        // 1. Find out which store this band belongs to
+        let storeId = await env.CART_KV.get(`device_store_${deviceId}`);
+        if (!storeId) {
+            storeId = "demo_store"; // Auto-assign to demo store for testing
+            await env.CART_KV.put(`device_store_${deviceId}`, storeId);
+        }
+
+        // 2. Check that specific store's catalog
+        let products = await env.CART_KV.get(`catalog_${storeId}`, "json") || [];
         let product = products.find(p => p.barcode === barcode);
         
-        // 2. If not found locally, query Global UPC Databases to give a helpful error
+        // 3. If not found locally, query Global UPC Databases to give a helpful error
         if (!product) {
             let globalName = "Unknown Product";
             
@@ -81,14 +88,13 @@ export async function onRequest(context) {
             }
             
             if (globalName !== "Unknown Product") {
-                // REAL MODE: We know what it is, but the store hasn't set a price. Reject it!
-                return new Response(JSON.stringify({ status: "error", error: `Found '${globalName.substring(0, 20)}...', but this store hasn't set a price for it.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+                return new Response(JSON.stringify({ status: "error", error: `Found '${globalName.substring(0, 20)}...', but Store '${storeId}' hasn't set a price for it.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
             } else {
                 return new Response(JSON.stringify({ status: "error", error: "Barcode not recognized locally or globally." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
             }
         }
 
-        // Add Product to Cart (Only happens if it exists in the Store's KV Catalog with a real price)
+        // Add Product to Cart
         const existingItemIndex = cartData.items.findIndex(item => item.barcode === barcode);
         if (existingItemIndex > -1) {
           cartData.items[existingItemIndex].quantity += 1;
@@ -100,8 +106,6 @@ export async function onRequest(context) {
         let total = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
         return new Response(JSON.stringify({ status: "success", productName: product.name, price: product.price.toFixed(2), cartTotal: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-
       }
 
       if (request.method === "POST" && url.pathname === "/api/cart/create-checkout-session") {
@@ -116,11 +120,19 @@ export async function onRequest(context) {
             return new Response(JSON.stringify({ error: "Cart is empty" }), { status: 400, headers: corsHeaders });
         }
 
-        if (!env.STRIPE_SECRET_KEY) {
-            return new Response(JSON.stringify({ error: "Stripe Secret Key not configured in Cloudflare." }), { status: 500, headers: corsHeaders });
+        // --- MULTI-STORE STRIPE PAYMENTS ---
+        let storeId = await env.CART_KV.get(`device_store_${deviceId}`) || "demo_store";
+        
+        // Fetch this specific store's Stripe Key from the database!
+        let storeStripeKey = await env.CART_KV.get(`stripe_key_${storeId}`);
+        
+        // Fallback to global environment variable if store hasn't set their key yet
+        if (!storeStripeKey && env.STRIPE_SECRET_KEY) storeStripeKey = env.STRIPE_SECRET_KEY;
+
+        if (!storeStripeKey) {
+            return new Response(JSON.stringify({ error: `Store '${storeId}' has not configured their Stripe Bank Account.` }), { status: 500, headers: corsHeaders });
         }
 
-        // Stripe expects form-urlencoded data for its REST API
         const stripeParams = new URLSearchParams();
         stripeParams.append('success_url', `${url.origin}/index.html?success=true`);
         stripeParams.append('cancel_url', `${url.origin}/index.html?canceled=true`);
@@ -133,11 +145,11 @@ export async function onRequest(context) {
             stripeParams.append(`line_items[${index}][quantity]`, item.quantity);
         });
 
-        // Call Stripe API directly
+        // Call Stripe API using the Store's Specific Key
         const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
+                'Authorization': `Bearer ${storeStripeKey}`,
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: stripeParams.toString()
