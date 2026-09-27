@@ -54,24 +54,64 @@ export async function onRequest(context) {
         if (Array.isArray(cartData)) cartData = { items: cartData };
 
         // Add Product Logic
+        // 1. Check local store catalog first
         let products = await env.CART_KV.get("product_catalog", "json") || [];
-        const product = products.find(p => p.barcode === barcode);
+        let product = products.find(p => p.barcode === barcode);
         
+        // 2. If not found locally, query Global UPC Databases!
         if (!product) {
-          return new Response(JSON.stringify({ status: "error", error: "Product not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            let globalName = "Unknown Product";
+            
+            // Try UPCItemDB (Great for electronics, books, general items)
+            try {
+                const upcRes = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
+                if (upcRes.ok) {
+                    const upcData = await upcRes.json();
+                    if (upcData.items && upcData.items.length > 0) {
+                        globalName = upcData.items[0].title;
+                    }
+                }
+            } catch (e) { console.error("UPCItemDB error"); }
+
+            // Try Open Food Facts (Great for groceries and snacks) if UPCItemDB failed
+            if (globalName === "Unknown Product") {
+                try {
+                    const offRes = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+                    if (offRes.ok) {
+                        const offData = await offRes.json();
+                        if (offData.status === 1 && offData.product && offData.product.product_name) {
+                            globalName = offData.product.product_name;
+                        }
+                    }
+                } catch (e) { console.error("OpenFoodFacts error"); }
+            }
+            
+            // If completely unknown, reject the scan
+            if (globalName === "Unknown Product") {
+                return new Response(JSON.stringify({ status: "error", error: "Item not recognized globally or locally." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            }
+            
+            // Generate a consistent "Mock Price" for the demo based on the barcode string
+            let numericVal = parseInt(barcode.slice(-3)) || 599;
+            let mockPrice = (numericVal % 1000) / 100.0;
+            if (mockPrice < 1.00) mockPrice += 3.99; // Ensure no $0 items
+            
+            product = { name: globalName, price: mockPrice };
         }
 
+        // Add Product to Cart
         const existingItemIndex = cartData.items.findIndex(item => item.barcode === barcode);
         if (existingItemIndex > -1) {
           cartData.items[existingItemIndex].quantity += 1;
         } else {
-          cartData.items.push({ barcode: barcode, ...product, quantity: 1 });
+          cartData.items.push({ barcode: barcode, name: product.name, price: product.price, quantity: 1 });
         }
 
         await env.CART_KV.put(`active_cart_${deviceId}`, JSON.stringify(cartData));
         let total = cartData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
-        return new Response(JSON.stringify({ status: "success", productName: product.name, price: product.price, cartTotal: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ status: "success", productName: product.name, price: product.price.toFixed(2), cartTotal: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
       }
 
       if (request.method === "POST" && url.pathname === "/api/cart/create-checkout-session") {
