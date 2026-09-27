@@ -5,45 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cortex Band - Receipts</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { display: none; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans">
+<body class="bg-slate-100 min-h-screen text-slate-900 antialiased">
     
-    <!-- Responsive Container -->
-    <div class="w-full md:max-w-3xl lg:max-w-5xl mx-auto bg-white min-h-screen shadow-2xl flex flex-col relative">
+    <div class="w-full md:max-w-xl mx-auto bg-white min-h-screen shadow-2xl flex flex-col relative">
         
         <!-- Header -->
-        <div class="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md z-10">
-            <h1 class="text-xl md:text-2xl font-bold tracking-wide">Receipts</h1>
+        <div class="bg-white/80 backdrop-blur-md px-6 py-5 flex justify-between items-center z-10 sticky top-0 border-b border-slate-100">
+            <h1 class="text-xl font-bold tracking-tight text-slate-900">Order History</h1>
         </div>
 
-        <div class="flex-grow p-4 md:p-8 overflow-y-auto pb-24">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 md:mb-6">Past Orders</h2>
-            
-            <div id="receipt-list" class="space-y-4 md:space-y-6 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
-                <div class="text-center text-gray-400 py-10 w-full col-span-2">Loading receipts...</div>
+        <!-- History Content -->
+        <div class="flex-grow px-6 py-6 overflow-y-auto pb-24 bg-slate-50/50">
+            <div id="receipt-list" class="space-y-5">
+                <div class="text-center text-slate-400 py-16 text-sm font-medium bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                    Loading receipts...
+                </div>
             </div>
         </div>
         
         <!-- Navigation Bar -->
-        <div class="absolute bottom-0 w-full bg-white border-t flex justify-around p-3 text-sm text-gray-500 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-            <a href="index.html" class="flex flex-col items-center hover:text-blue-600 transition">
-                <svg class="w-6 h-6 mb-1 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <div class="absolute bottom-0 w-full bg-white border-t border-slate-100 flex justify-around p-1 text-xs font-medium text-slate-400 z-50">
+            <a href="index.html" class="flex flex-col items-center hover:text-indigo-600 w-1/2 py-3 transition-colors">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Cart
             </a>
-            <a href="history.html" class="flex flex-col items-center text-blue-600 font-bold transition">
-                <svg class="w-6 h-6 mb-1 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            <a href="history.html" class="flex flex-col items-center text-indigo-600 w-1/2 py-3 transition-colors">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                 Receipts
             </a>
         </div>
     </div>
     
     <script>
-        const API_URL = '/api';
+        const API_URL = 'https://cortex-saas-platform.pages.dev/api';
         
         async function loadHistory() {
             const currentDeviceId = localStorage.getItem('cortex_device_id');
             if(!currentDeviceId) {
-                document.getElementById('receipt-list').innerHTML = '<div class="text-center text-gray-500 py-10 w-full col-span-2">Please pair a band on the Cart page to see your receipts.</div>';
+                document.getElementById('receipt-list').innerHTML = '<div class="text-center text-slate-400 py-16 text-sm font-medium bg-white rounded-2xl border-2 border-dashed border-slate-200">Please pair your band first.</div>';
                 return;
             }
 
@@ -55,33 +60,38 @@
                 const list = document.getElementById('receipt-list');
                 
                 if(!history || history.length === 0) {
-                    list.innerHTML = '<div class="text-center text-gray-400 py-10 w-full col-span-2">No past orders found.</div>';
+                    list.innerHTML = '<div class="text-center text-slate-400 py-16 text-sm font-medium bg-white rounded-2xl border-2 border-dashed border-slate-200">No past orders found.</div>';
                     return;
                 }
                 
                 list.innerHTML = history.map(order => {
                     const dateObj = new Date(order.date);
-                    const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
+                    const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
                     
                     const itemsHtml = order.items.map(i => `
-                        <li class="flex justify-between py-1">
-                            <span>${i.quantity}x ${i.name}</span> 
-                            <span class="text-gray-500">$${(i.price * i.quantity).toFixed(2)}</span>
+                        <li class="flex justify-between py-2 text-sm border-b border-slate-50 last:border-0">
+                            <span class="text-slate-600 font-medium"><span class="text-slate-400 mr-2 text-xs">${i.quantity}x</span>${i.name}</span> 
+                            <span class="text-slate-900 font-semibold">$${(i.price * i.quantity).toFixed(2)}</span>
                         </li>
                     `).join('');
 
                     return `
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition h-fit">
-                        <div class="flex justify-between items-center border-b pb-3 mb-3 text-sm text-gray-500">
-                            <span class="font-bold text-gray-700">Order #${order.id.toString().slice(-4)}</span>
-                            <span>${dateStr}</span>
+                    <div class="bg-white border border-slate-100 rounded-3xl shadow-sm p-6 relative hover:shadow-md transition-shadow overflow-hidden">
+                        
+                        <div class="flex justify-between items-center mb-5">
+                            <div class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-md text-xs font-bold tracking-wide">
+                                ORDER #${order.id.toString().padStart(4, '0')}
+                            </div>
+                            <span class="text-xs text-slate-400 font-medium">${dateStr}</span>
                         </div>
-                        <ul class="text-sm space-y-1 text-gray-700 mb-4">
+                        
+                        <ul class="mb-5 space-y-1">
                             ${itemsHtml}
                         </ul>
-                        <div class="flex justify-between font-bold text-gray-900 border-t pt-3 text-lg">
-                            <span>Total Paid</span>
-                            <span class="text-blue-600">$${order.total.toFixed(2)}</span>
+                        
+                        <div class="flex justify-between items-center border-t border-slate-100 pt-4 bg-slate-50/50 -mx-6 -mb-6 px-6 pb-6">
+                            <span class="text-sm font-semibold text-slate-500">Total Paid</span>
+                            <span class="font-bold text-xl text-slate-900">$${order.total.toFixed(2)}</span>
                         </div>
                     </div>
                     `;
@@ -89,7 +99,7 @@
                 
             } catch (err) {
                 console.error(err);
-                document.getElementById('receipt-list').innerHTML = '<div class="text-red-500 text-center py-4 w-full">Error loading receipts. Ensure you are paired.</div>';
+                document.getElementById('receipt-list').innerHTML = '<div class="text-red-500 text-center py-4 w-full text-sm font-medium">Error loading receipts.</div>';
             }
         }
         
