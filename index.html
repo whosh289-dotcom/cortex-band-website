@@ -215,7 +215,7 @@
                 });
                 if (res.ok) {
                     localStorage.setItem('cortex_device_id', code);
-                    document.getElementById('pair-modal').classList.add('hidden');
+                    localStorage.setItem('cortex_logged_in', 'true');
                     codeInput.value = '';
                     fetchCart();
                 } else {
