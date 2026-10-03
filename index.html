@@ -29,13 +29,13 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg> Receipts
             </a>
         </nav>
-        <div class="w-full bg-slate-800 text-emerald-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Band Connected</div>
+        <div id="desktop-conn" class="w-full bg-slate-800 text-slate-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-slate-500 rounded-full"></div> Checking Connection...</div>
     </aside>
 
     <!-- Mobile Header -->
     <div class="md:hidden bg-black/40 backdrop-blur-xl border-b border-white/5 px-6 py-5 flex justify-between items-center sticky top-0 z-40 border-b border-slate-800 shadow-sm">
         <h1 class="text-xl font-bold tracking-tight text-slate-50">Cortex Cart</h1>
-        <span class="text-sm font-semibold text-emerald-400 bg-emerald-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Connected</span>
+        <span id="mobile-conn" class="text-sm font-semibold text-slate-400 bg-slate-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-slate-500 rounded-full"></div> Checking...</span>
     </div>
 
     <!-- Main Content -->
@@ -87,9 +87,58 @@
         localStorage.setItem('cortex_device_id', 'CORTEX-DEMO');
         const API_URL = 'https://cortex-saas-platform.pages.dev/api';
         
-        async function fetchCart() {
+        let isConnected = false;
+
+        async function checkStatus() {
             const currentDeviceId = localStorage.getItem('cortex_device_id');
             if(!currentDeviceId) return;
+            try {
+                const res = await fetch(API_URL + '/band/status?deviceId=' + currentDeviceId);
+                const data = await res.json();
+                
+                const dConn = document.getElementById('desktop-conn');
+                const mConn = document.getElementById('mobile-conn');
+                const list = document.getElementById('cart-list');
+                const totalEl = document.getElementById('cart-total');
+                const countEl = document.getElementById('item-count');
+                const checkoutBtn = document.getElementById('checkout-btn');
+
+                if (data.paired) {
+                    isConnected = true;
+                    // Update UI to Green Connected
+                    if(dConn) dConn.outerHTML = '<div id="desktop-conn" class="w-full bg-slate-800 text-emerald-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Band Connected</div>';
+                    if(mConn) mConn.outerHTML = '<span id="mobile-conn" class="text-sm font-semibold text-emerald-400 bg-emerald-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Connected</span>';
+                    
+                    fetchCart(); // Fetch actual cart items
+                } else {
+                    isConnected = false;
+                    // Update UI to Red Disconnected
+                    if(dConn) dConn.outerHTML = '<div id="desktop-conn" class="w-full bg-slate-800 text-rose-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Waiting for Band...</div>';
+                    if(mConn) mConn.outerHTML = '<span id="mobile-conn" class="text-sm font-semibold text-rose-400 bg-rose-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Waiting...</span>';
+                    
+                    // Show instructions
+                    list.innerHTML = `<div class="col-span-full text-left text-slate-400 p-6 text-sm font-medium glass-panel rounded-3xl border-2 border-dashed border-rose-500/30 shadow-sm">
+                        <h3 class="text-rose-400 font-bold text-lg mb-3">Hardware Not Detected</h3>
+                        <ol class="list-decimal pl-5 space-y-2">
+                            <li>Power on the Cortex Band using the USB cable.</li>
+                            <li>Connect to the <b>Cortex-CAM-Setup</b> Wi-Fi hotspot on your phone.</li>
+                            <li>Select your local Wi-Fi router from the popup.</li>
+                            <li>Use the band to scan the <b>Store Check-In</b> QR code to establish the secure link!</li>
+                        </ol>
+                    </div>`;
+                    totalEl.innerText = "$0.00";
+                    countEl.innerText = "0 Items";
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function fetchCart() {
+            if(!isConnected) return;
+            const currentDeviceId = localStorage.getItem('cortex_device_id');
             try {
                 const res = await fetch(API_URL + '/cart?deviceId=' + currentDeviceId);
                 if(!res.ok) throw new Error("API Error");
@@ -98,25 +147,26 @@
                 const list = document.getElementById('cart-list');
                 const totalEl = document.getElementById('cart-total');
                 const countEl = document.getElementById('item-count');
+                const checkoutBtn = document.getElementById('checkout-btn');
                 
                 if(!data.items || data.items.length === 0) {
                     list.innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium glass-panel rounded-3xl border-2 border-dashed border-white/10 shadow-sm">Your cart is currently empty.<br>Awaiting barcode scans from device...</div>';
                     totalEl.innerText = "$0.00";
                     countEl.innerText = "0 Items";
-                    document.getElementById('checkout-btn').disabled = true;
-                    document.getElementById('checkout-btn').classList.add('opacity-50', 'cursor-not-allowed');
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     return;
                 }
                 
-                document.getElementById('checkout-btn').disabled = false;
-                document.getElementById('checkout-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 
                 let totalCount = 0;
                 list.innerHTML = data.items.map(item => {
                     totalCount += item.quantity;
                     return `
                     <div class="flex justify-between items-center glass-panel hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 floating p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-cyan-900/300"></div>
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-cyan-900/30"></div>
                         <div class="flex items-center gap-4 pl-2">
                             <div class="bg-cyan-900/30 text-cyan-300 font-bold px-3 py-1.5 text-sm rounded-lg border border-cyan-800">
                                 ${item.quantity}
@@ -128,17 +178,17 @@
                     `;
                 }).join('');
                 
-                totalEl.innerText = `$${data.total.toFixed(2)}`;
-                countEl.innerText = `${totalCount} Item${totalCount !== 1 ? 's' : ''}`;
+                totalEl.innerText = "$" + (data.total || 0).toFixed(2);
+                countEl.innerText = totalCount + (totalCount === 1 ? " Item" : " Items");
                 
-            } catch (err) {
+            } catch(err) {
                 console.error(err);
             }
         }
         
         setInterval(() => {
             if(localStorage.getItem('cortex_device_id')) {
-                fetchCart();
+                checkStatus();
             }
         }, 2000);
         
