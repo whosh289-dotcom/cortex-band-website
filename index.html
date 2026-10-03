@@ -30,6 +30,9 @@
             <a href="history.html" class="flex items-center gap-3 text-slate-400 hover:bg-slate-900 hover:text-cyan-400 font-medium px-4 py-3 rounded-xl transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg> Receipts
             </a>
+            <button type="button" onclick="toggleSetupGuide()" class="w-full flex items-center gap-3 text-slate-400 hover:bg-slate-900 hover:text-cyan-400 font-medium px-4 py-3 rounded-xl transition-colors text-left">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Setup Guide
+            </button>
         </nav>
         <div id="desktop-conn" class="w-full bg-slate-800 text-slate-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-slate-500 rounded-full"></div> Checking Connection...</div>
     </aside>
@@ -37,14 +40,19 @@
     <!-- Mobile Header -->
     <div class="md:hidden bg-black/40 backdrop-blur-xl border-b border-white/5 px-6 py-5 flex justify-between items-center sticky top-0 z-40 border-b border-slate-800 shadow-sm">
         <h1 class="text-xl font-bold tracking-tight text-slate-50">Cortex Cart</h1>
-        <span id="mobile-conn" class="text-sm font-semibold text-slate-400 bg-slate-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-slate-500 rounded-full"></div> Checking...</span>
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="toggleSetupGuide()" aria-label="Setup guide" class="w-9 h-9 rounded-full border border-white/10 text-slate-300 hover:text-cyan-300 hover:border-cyan-400/40 flex items-center justify-center transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </button>
+            <span id="mobile-conn" class="text-sm font-semibold text-slate-400 bg-slate-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-slate-500 rounded-full"></div> Checking...</span>
+        </div>
     </div>
 
     <!-- Main Content -->
     <main class="flex-grow p-6 md:p-10 pb-48 md:pb-10 w-full max-w-7xl">
 
         <!-- Device Setup Guide -->
-        <section id="setup-guide" class="relative overflow-hidden glass-panel rounded-3xl mb-10 border border-cyan-500/10">
+        <section id="setup-guide" class="hidden relative overflow-hidden glass-panel rounded-3xl mb-10 border border-cyan-500/10">
             <div class="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -60,10 +68,15 @@
                             <p class="text-sm text-slate-400 mt-1">Complete these steps once to pair your band with this checkout.</p>
                         </div>
                     </div>
+                    <div class="flex items-center gap-2 shrink-0">
                     <button id="retry-conn" onclick="location.reload()" class="group inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 hover:border-cyan-400/60 text-cyan-300 text-sm font-semibold transition-all active:scale-[0.97] shrink-0">
                         <svg class="w-4 h-4 transition-transform duration-500 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                         Re‑check connection
                     </button>
+                    <button onclick="toggleSetupGuide(false)" aria-label="Close setup guide" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 hover:border-white/30 text-slate-400 hover:text-slate-100 transition-colors shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    </div>
                 </div>
 
                 <ol class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -72,7 +85,7 @@
                             <span class="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-300 text-sm font-bold flex items-center justify-center border border-cyan-400/20">1</span>
                             <h3 class="font-semibold text-slate-100">Join setup network</h3>
                         </div>
-                        <p class="text-sm text-slate-400 leading-relaxed">Power on the band, then connect your phone or laptop to the Wi‑Fi network <span class="font-mono text-cyan-300 bg-cyan-500/10 px-1.5 py-0.5 rounded">Cortex‑CAM‑Setup</span>.</p>
+                        <p class="text-sm text-slate-400 leading-relaxed">The band is already powered via the laptop. Connect your phone or laptop to the Wi‑Fi network <span class="font-mono text-cyan-300 bg-cyan-500/10 px-1.5 py-0.5 rounded">Cortex‑CAM‑Setup</span>.</p>
                     </li>
                     <li class="relative rounded-2xl bg-white/[0.02] border border-white/5 p-5 hover:border-cyan-400/20 transition-colors">
                         <div class="flex items-center gap-3 mb-3">
@@ -141,6 +154,13 @@
 
 
     <script>
+        function toggleSetupGuide(show) {
+            const guide = document.getElementById('setup-guide');
+            if (!guide) return;
+            const open = typeof show === 'boolean' ? show : guide.classList.contains('hidden');
+            guide.classList.toggle('hidden', !open);
+            if (open) guide.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         localStorage.setItem('cortex_device_id', 'CORTEX-DEMO');
         const API_URL = 'https://cortex-saas-platform.pages.dev/api';
         
