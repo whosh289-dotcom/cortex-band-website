@@ -25,7 +25,3 @@ export default {{
 with open('worker.js', 'w') as f:
     f.write(worker_code)
 
-with open('wrangler.toml', 'w') as f:
-    f.write('name = "cortex-band-website"\\n')
-    f.write('main = "worker.js"\\n')
-    f.write('compatibility_date = "2024-03-20"\\n')
