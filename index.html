@@ -125,9 +125,6 @@
                     fetchCart(); 
                 } else {
                     isConnected = false;
-                    // Show the full screen blocker!
-                    const blocker = document.getElementById('connection-blocker');
-                    if(blocker) blocker.classList.remove('hidden');
 
                     if(dConn) dConn.outerHTML = '<div id="desktop-conn" class="w-full bg-slate-800 text-rose-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Not Connected Yet</div>';
                     if(mConn) mConn.outerHTML = '<span id="mobile-conn" class="text-sm font-semibold text-rose-400 bg-rose-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Not Connected</div>';
