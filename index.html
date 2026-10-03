@@ -105,27 +105,25 @@
 
                 if (data.paired) {
                     isConnected = true;
-                    // Update UI to Green Connected
+                    // Hide the full screen blocker!
+                    const blocker = document.getElementById('connection-blocker');
+                    if(blocker) blocker.classList.add('hidden');
+                    
                     if(dConn) dConn.outerHTML = '<div id="desktop-conn" class="w-full bg-slate-800 text-emerald-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Band Connected</div>';
                     if(mConn) mConn.outerHTML = '<span id="mobile-conn" class="text-sm font-semibold text-emerald-400 bg-emerald-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Connected</span>';
                     
-                    fetchCart(); // Fetch actual cart items
+                    fetchCart(); 
                 } else {
                     isConnected = false;
-                    // Update UI to Red Disconnected
-                    if(dConn) dConn.outerHTML = '<div id="desktop-conn" class="w-full bg-slate-800 text-rose-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Waiting for Band...</div>';
-                    if(mConn) mConn.outerHTML = '<span id="mobile-conn" class="text-sm font-semibold text-rose-400 bg-rose-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Waiting...</span>';
+                    // Show the full screen blocker!
+                    const blocker = document.getElementById('connection-blocker');
+                    if(blocker) blocker.classList.remove('hidden');
+
+                    if(dConn) dConn.outerHTML = '<div id="desktop-conn" class="w-full bg-slate-800 text-rose-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Not Connected Yet</div>';
+                    if(mConn) mConn.outerHTML = '<span id="mobile-conn" class="text-sm font-semibold text-rose-400 bg-rose-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-rose-500 rounded-full"></div> Not Connected</div>';
                     
-                    // Show instructions
-                    list.innerHTML = `<div class="col-span-full text-left text-slate-400 p-6 text-sm font-medium glass-panel rounded-3xl border-2 border-dashed border-rose-500/30 shadow-sm">
-                        <h3 class="text-rose-400 font-bold text-lg mb-3">Hardware Not Detected</h3>
-                        <ol class="list-decimal pl-5 space-y-2">
-                            <li>Power on the Cortex Band using the USB cable.</li>
-                            <li>Connect to the <b>Cortex-CAM-Setup</b> Wi-Fi hotspot on your phone.</li>
-                            <li>Select your local Wi-Fi router from the popup.</li>
-                            <li>Use the band to scan the <b>Store Check-In</b> QR code to establish the secure link!</li>
-                        </ol>
-                    </div>`;
+                    // Keep cart empty
+                    list.innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium glass-panel rounded-3xl border-2 border-dashed border-white/10 shadow-sm">Your cart is currently empty.<br>Awaiting barcode scans from device...</div>';
                     totalEl.innerText = "$0.00";
                     countEl.innerText = "0 Items";
                     checkoutBtn.disabled = true;
