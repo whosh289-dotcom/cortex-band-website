@@ -190,7 +190,10 @@
             }
         }, 2000);
         
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener("DOMContentLoaded", () => {
+      const c = document.getElementById('dummy-card'); if(c) c.value = '4242 4242 4242 4242';
+      const e = document.getElementById('dummy-exp'); if(e) e.value = '12/28';
+      const v = document.getElementById('dummy-cvv'); if(v) v.value = '123';
             const urlParams = new URLSearchParams(window.location.search);
             if (!urlParams.get('success') && !urlParams.get('canceled')) fetchCart();
 
@@ -304,16 +307,16 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs text-slate-400 mb-1 font-medium">CARD NUMBER (VIRTUAL)</label>
-                    <input type="text" value="4242 4242 4242 4242" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-500/50">
+                    <input type="text" id="dummy-card" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-500/50">
                 </div>
                 <div class="flex gap-4">
                     <div class="w-1/2">
                         <label class="block text-xs text-slate-400 mb-1 font-medium">EXPIRY</label>
-                        <input type="text" value="12/28" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-500/50">
+                        <input type="text" id="dummy-exp" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-500/50">
                     </div>
                     <div class="w-1/2">
                         <label class="block text-xs text-slate-400 mb-1 font-medium">CVV</label>
-                        <input type="text" value="123" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-500/50">
+                        <input type="text" id="dummy-cvv" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-slate-300 font-mono text-sm focus:outline-none focus:border-cyan-500/50">
                     </div>
                 </div>
                 <div class="pt-4">
