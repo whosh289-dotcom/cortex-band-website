@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cortex Band - The Next Generation Smart Retail POS">
+    <meta name="keywords" content="POS, Retail, Enterprise, Band, Cortex, Smart Retail">
     <title>Cortex Band - Receipts</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,9 +41,18 @@
         
         <div id="receipt-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">
-                Loading receipts...
+                Retrieving transaction history...
             </div>
         </div>
+
+        <!-- FOOTER -->
+        <footer class="mt-12 py-8 bg-slate-900 text-slate-400 rounded-2xl flex flex-col md:flex-row justify-center items-center text-xs px-8 shadow-xl">
+            <div class="flex space-x-4 mt-4 md:mt-0">
+                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
+                <a href="#" class="hover:text-white transition-colors">Support</a>
+            </div>
+        </footer>
     </main>
 
     <!-- Mobile Bottom Nav -->
@@ -54,13 +65,23 @@
         </a>
     </div>
     
+    <!-- COOKIE CONSENT BANNER -->
+    <div id="cookie-banner" class="fixed bottom-24 md:bottom-6 left-1/2 transform -translate-x-1/2 w-11/12 max-w-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex flex-col md:flex-row items-center justify-between z-[100] shadow-2xl">
+        <p class="text-sm text-slate-100 mb-4 md:mb-0 text-center md:text-left">
+            We use enterprise-grade cookies to ensure the best experience on our platform. By continuing, you agree to our <a href="#" class="text-indigo-400 hover:underline">Privacy Policy</a>.
+        </p>
+        <button onclick="document.getElementById('cookie-banner').style.display='none'" class="whitespace-nowrap px-6 py-2 bg-indigo-500 text-white font-semibold rounded-full hover:bg-indigo-600 transition shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+            Accept & Continue
+        </button>
+    </div>
+
     <script>
         const API_URL = 'https://cortex-saas-platform.pages.dev/api';
         
         async function loadHistory() {
             const currentDeviceId = localStorage.getItem('cortex_device_id');
             if(!currentDeviceId) {
-                document.getElementById('receipt-list').innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">Please pair your band first.</div>';
+                document.getElementById('receipt-list').innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">Please authenticate your Cortex Band to view transaction history.</div>';
                 return;
             }
             try {
@@ -71,7 +92,7 @@
                 const list = document.getElementById('receipt-list');
                 
                 if(!history || history.length === 0) {
-                    list.innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">No past orders found.</div>';
+                    list.innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">No transaction history available.</div>';
                     return;
                 }
                 

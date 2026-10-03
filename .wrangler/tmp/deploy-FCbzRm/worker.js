@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+// worker.js
+var indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +7,7 @@
     <meta name="description" content="Cortex Band - The Next Generation Smart Retail POS">
     <meta name="keywords" content="POS, Retail, Enterprise, Band, Cortex, Smart Retail">
     <title>Cortex Band - Checkout</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"><\/script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -54,7 +55,7 @@
         </div>
 
         <!-- FOOTER -->
-        <footer class="mt-12 py-6 border-t border-white/5 flex flex-col md:flex-row justify-center items-center text-xs text-slate-400">
+        <footer class="mt-12 py-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400">
             <div class="flex space-x-4 mt-4 md:mt-0">
                 <a href="#" class="hover:text-cyan-400 transition-colors">Privacy Policy</a>
                 <a href="#" class="hover:text-cyan-400 transition-colors">Terms of Service</a>
@@ -164,22 +165,22 @@
                 let totalCount = 0;
                 list.innerHTML = data.items.map(item => {
                     totalCount += item.quantity;
-                    return `
+                    return \`
                     <div class="flex justify-between items-center glass-panel hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all duration-300 floating p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-cyan-900/300"></div>
                         <div class="flex items-center gap-4 pl-2">
                             <div class="bg-cyan-900/30 text-cyan-300 font-bold px-3 py-1.5 text-sm rounded-lg border border-cyan-800">
-                                ${item.quantity}
+                                \${item.quantity}
                             </div>
-                            <span class="font-bold text-slate-200 text-lg">${item.name}</span>
+                            <span class="font-bold text-slate-200 text-lg">\${item.name}</span>
                         </div>
-                        <span class="font-black text-slate-50 text-xl">$${(item.price * item.quantity).toFixed(2)}</span>
+                        <span class="font-black text-slate-50 text-xl">$\${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
-                    `;
+                    \`;
                 }).join('');
                 
-                totalEl.innerText = `$${data.total.toFixed(2)}`;
-                countEl.innerText = `${totalCount} Item${totalCount !== 1 ? 's' : ''}`;
+                totalEl.innerText = \`$\${data.total.toFixed(2)}\`;
+                countEl.innerText = \`\${totalCount} Item\${totalCount !== 1 ? 's' : ''}\`;
                 
             } catch (err) {
                 console.error(err);
@@ -212,7 +213,7 @@
                         body: JSON.stringify({ deviceId })
                     }).then(() => {
                         setTimeout(() => {
-                            btn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Secure Checkout`;
+                            btn.innerHTML = \`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Secure Checkout\`;
                             btn.classList.replace('bg-emerald-500', 'bg-cyan-500');
                             btn.classList.replace('hover:bg-emerald-600', 'hover:bg-cyan-600');
                             btn.classList.replace('shadow-emerald-500/30', 'shadow-[0_0_20px_rgba(6,182,212,0.5)]');
@@ -271,11 +272,165 @@
                 else throw new Error(data.error || "Failed to create session");
             } catch(e) {
                 alert(e.message);
-                btn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Secure Checkout`;
+                btn.innerHTML = \`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Secure Checkout\`;
                 btn.disabled = false;
             }
         });
-    </script>
+    <\/script>
 </body>
 </html>
 <!-- Trigger redeploy -->
+`;
+var historyHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cortex Band - The Next Generation Smart Retail POS">
+    <meta name="keywords" content="POS, Retail, Enterprise, Band, Cortex, Smart Retail">
+    <title>Cortex Band - Receipts</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-200 min-h-screen text-slate-900 antialiased flex flex-col md:flex-row relative selection:bg-indigo-500 selection:text-white">
+
+    <!-- Desktop Sidebar -->
+    <aside class="hidden md:flex flex-col w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200/50 p-6 sticky top-0 h-screen shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all">
+        <h1 class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-10">Cortex Platform</h1>
+        <nav class="space-y-2 flex-grow">
+            <a href="index.html" class="flex items-center gap-3 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 font-medium px-4 py-3 rounded-xl transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Cart
+            </a>
+            <a href="history.html" class="flex items-center gap-3 text-indigo-600 font-semibold bg-indigo-50 px-4 py-3 rounded-xl transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg> Receipts
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-white/80 backdrop-blur-md px-6 py-5 flex justify-between items-center sticky top-0 z-40 border-b border-slate-100 shadow-sm">
+        <h1 class="text-xl font-bold tracking-tight text-slate-900">Order History</h1>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-6 md:p-10 pb-32 md:pb-10 w-full max-w-7xl mx-auto">
+        <div class="hidden md:flex justify-between items-end mb-8">
+            <h2 class="text-3xl font-bold text-slate-800">Your Receipts</h2>
+        </div>
+        
+        <div id="receipt-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">
+                Retrieving transaction history...
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="mt-12 py-8 bg-slate-900 text-slate-400 rounded-2xl flex flex-col md:flex-row justify-between items-center text-xs px-8 shadow-xl">
+            <div class="flex space-x-4 mt-4 md:mt-0">
+                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
+                <a href="#" class="hover:text-white transition-colors">Support</a>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Mobile Bottom Nav -->
+    <div class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-100 flex justify-around p-1 text-xs font-medium text-slate-400 z-50 shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center hover:text-indigo-600 w-1/2 py-3 transition-colors">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Cart
+        </a>
+        <a href="history.html" class="flex flex-col items-center text-indigo-600 w-1/2 py-3 transition-colors">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg> Receipts
+        </a>
+    </div>
+    
+    <!-- COOKIE CONSENT BANNER -->
+    <div id="cookie-banner" class="fixed bottom-24 md:bottom-6 left-1/2 transform -translate-x-1/2 w-11/12 max-w-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex flex-col md:flex-row items-center justify-between z-[100] shadow-2xl">
+        <p class="text-sm text-slate-100 mb-4 md:mb-0 text-center md:text-left">
+            We use enterprise-grade cookies to ensure the best experience on our platform. By continuing, you agree to our <a href="#" class="text-indigo-400 hover:underline">Privacy Policy</a>.
+        </p>
+        <button onclick="document.getElementById('cookie-banner').style.display='none'" class="whitespace-nowrap px-6 py-2 bg-indigo-500 text-white font-semibold rounded-full hover:bg-indigo-600 transition shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+            Accept & Continue
+        </button>
+    </div>
+
+    <script>
+        const API_URL = 'https://cortex-saas-platform.pages.dev/api';
+        
+        async function loadHistory() {
+            const currentDeviceId = localStorage.getItem('cortex_device_id');
+            if(!currentDeviceId) {
+                document.getElementById('receipt-list').innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">Please authenticate your Cortex Band to view transaction history.</div>';
+                return;
+            }
+            try {
+                const res = await fetch(API_URL + '/history?deviceId=' + currentDeviceId);
+                if(!res.ok) throw new Error("API Error");
+                const history = await res.json();
+                
+                const list = document.getElementById('receipt-list');
+                
+                if(!history || history.length === 0) {
+                    list.innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">No transaction history available.</div>';
+                    return;
+                }
+                
+                list.innerHTML = history.map(order => {
+                    const dateObj = new Date(order.date);
+                    const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                    
+                    const itemsHtml = order.items.map(i => \`
+                        <li class="flex justify-between py-2.5 text-sm border-b border-slate-50 last:border-0">
+                            <span class="text-slate-700 font-medium"><span class="text-slate-400 mr-2 text-xs">\${i.quantity}x</span>\${i.name}</span> 
+                            <span class="text-slate-900 font-semibold">$\${(i.price * i.quantity).toFixed(2)}</span>
+                        </li>
+                    \`).join('');
+
+                    return \`
+                    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm p-7 relative hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden h-fit">
+                        <div class="absolute top-0 left-0 right-0 h-1.5 bg-indigo-500"></div>
+                        <div class="flex justify-between items-center mb-6 mt-2">
+                            <div class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold tracking-widest">
+                                ORD #\${order.id.toString().padStart(4, '0')}
+                            </div>
+                            <span class="text-xs text-slate-400 font-semibold">\${dateStr}</span>
+                        </div>
+                        <ul class="mb-6 space-y-1">
+                            \${itemsHtml}
+                        </ul>
+                        <div class="flex justify-between items-center border-t border-slate-100 pt-5 bg-slate-50/50 -mx-7 -mb-7 px-7 pb-7">
+                            <span class="text-sm font-semibold text-slate-500">Total Paid</span>
+                            <span class="font-bold text-2xl text-slate-900">$\${order.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    \`;
+                }).join('');
+                
+            } catch (err) {
+                console.error(err);
+                document.getElementById('receipt-list').innerHTML = '<div class="col-span-full text-red-500 text-center py-4 w-full text-sm font-medium">Error loading receipts.</div>';
+            }
+        }
+        
+        loadHistory();
+    <\/script>
+</body>
+</html>
+`;
+var worker_default = {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    if (url.pathname === "/history" || url.pathname === "/history.html") {
+      return new Response(historyHtml, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+    }
+    return new Response(indexHtml, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+  }
+};
+export {
+  worker_default as default
+};
+//# sourceMappingURL=worker.js.map
