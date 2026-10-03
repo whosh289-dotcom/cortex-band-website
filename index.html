@@ -29,15 +29,13 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg> Receipts
             </a>
         </nav>
-        <button onclick="document.getElementById('pair-modal').classList.remove('hidden')" class="w-full bg-slate-800 text-slate-300 py-3 rounded-xl font-semibold hover:bg-slate-700 transition-colors shadow-inner">
-            Pair Device
-        </button>
+        <div class="w-full bg-slate-800 text-emerald-400 py-3 rounded-xl font-semibold text-center shadow-inner flex items-center justify-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Band Connected</div>
     </aside>
 
     <!-- Mobile Header -->
     <div class="md:hidden bg-black/40 backdrop-blur-xl border-b border-white/5 px-6 py-5 flex justify-between items-center sticky top-0 z-40 border-b border-slate-800 shadow-sm">
         <h1 class="text-xl font-bold tracking-tight text-slate-50">Cortex Cart</h1>
-        <button onclick="document.getElementById('pair-modal').classList.remove('hidden')" class="text-sm font-semibold text-cyan-400 bg-cyan-900/30 px-4 py-2 rounded-full">Pair</button>
+        <span class="text-sm font-semibold text-emerald-400 bg-emerald-900/30 px-4 py-2 rounded-full flex items-center gap-2"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Connected</span>
     </div>
 
     <!-- Main Content -->
@@ -49,7 +47,7 @@
         
         <div id="cart-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
             <div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium glass-panel rounded-3xl border-2 border-dashed border-white/10 shadow-sm">
-                Your cart is currently empty.<br>Please pair your Cortex Band to begin scanning items.
+                Your cart is currently empty.<br>Awaiting barcode scans from device...
             </div>
         </div>
 
@@ -91,10 +89,7 @@
         
         async function fetchCart() {
             const currentDeviceId = localStorage.getItem('cortex_device_id');
-            if(!currentDeviceId) {
-                document.getElementById('pair-modal').classList.remove('hidden');
-                return;
-            }
+            if(!currentDeviceId) return;
             try {
                 const res = await fetch(API_URL + '/cart?deviceId=' + currentDeviceId);
                 if(!res.ok) throw new Error("API Error");
@@ -105,7 +100,7 @@
                 const countEl = document.getElementById('item-count');
                 
                 if(!data.items || data.items.length === 0) {
-                    list.innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium glass-panel rounded-3xl border-2 border-dashed border-white/10 shadow-sm">Your cart is currently empty.<br>Please pair your Cortex Band to begin scanning items.</div>';
+                    list.innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium glass-panel rounded-3xl border-2 border-dashed border-white/10 shadow-sm">Your cart is currently empty.<br>Awaiting barcode scans from device...</div>';
                     totalEl.innerText = "$0.00";
                     countEl.innerText = "0 Items";
                     document.getElementById('checkout-btn').disabled = true;
@@ -142,7 +137,7 @@
         }
         
         setInterval(() => {
-            if(localStorage.getItem('cortex_device_id') && document.getElementById('pair-modal').classList.contains('hidden')) {
+            if(localStorage.getItem('cortex_device_id')) {
                 fetchCart();
             }
         }, 2000);
@@ -179,31 +174,7 @@
             if(urlParams.get('canceled') === 'true') window.history.replaceState({}, document.title, window.location.pathname);
         });
         
-        async function pairBand() {
-            const codeInput = document.getElementById('pair-code-input');
-            const code = codeInput.value.trim().toUpperCase();
-            if (code.length < 6) return alert('Please enter the 6-character code.');
-            const btn = document.querySelector('#pair-modal button[onclick*="pairBand()"]');
-            // Disable button to prevent double submissions
-            if (btn) btn.disabled = true;
-            try {
-                const res = await fetch(API_URL + '/band/pair', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ deviceId: code })
-                });
-                if (res.ok) {
-                    localStorage.setItem('cortex_device_id', code);
-                    localStorage.setItem('cortex_logged_in', 'true');
-                    codeInput.value = '';
-                    fetchCart();
-                } else {
-                    // Try to extract server-provided error message
-                    let errMsg = 'Error pairing device with server.';
-                    try { const data = await res.json(); if (data.error) errMsg = data.error; } catch (_) {}
-                    alert(errMsg);
-                }
-            } catch (e) {
+         catch (e) {
                 alert('Network error.');
             }
             if (btn) btn.disabled = false;

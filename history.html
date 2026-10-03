@@ -65,7 +65,7 @@
         async function loadHistory() {
             const currentDeviceId = localStorage.getItem('cortex_device_id');
             if(!currentDeviceId) {
-                document.getElementById('receipt-list').innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">Please authenticate your Cortex Band to view transaction history.</div>';
+                document.getElementById('receipt-list').innerHTML = '<div class="col-span-full text-center text-slate-400 py-20 text-sm font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">No previous receipts found.</div>';
                 return;
             }
             try {
