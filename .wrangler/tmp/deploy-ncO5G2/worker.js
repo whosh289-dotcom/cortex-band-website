@@ -82,40 +82,12 @@ var indexHtml = `<!DOCTYPE html>
     </div>
 
     <!-- Pairing Modal -->
-    <div id="pair-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-opacity">
-        <div class="bg-slate-950 p-8 max-w-md w-full shadow-2xl rounded-3xl relative">
-            <div class="text-center mb-5">
-                <div class="mx-auto bg-cyan-900/50 text-cyan-400 w-14 h-14 flex items-center justify-center rounded-full mb-3 shadow-inner">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                </div>
-                <h3 class="text-2xl font-bold text-slate-50 tracking-tight">Pair Your Band</h3>
-            </div>
-
-            <div class="bg-cyan-900/30/50 border border-cyan-800 rounded-2xl p-5 mb-6 text-left shadow-sm">
-                <h4 class="text-xs font-bold tracking-widest text-cyan-200 uppercase mb-3">Enterprise Device Provisioning?</h4>
-                <ol class="text-sm text-slate-400 space-y-2 pl-4 list-decimal font-medium">
-                    <li>Initialize your Cortex Enterprise Band.</li>
-                    <li>Connect your secure terminal to <strong class="text-slate-50 font-bold">Cortex-Band-Setup</strong>.</li>
-                    <li>Authenticate the device to the secure network.</li>
-                </ol>
-            </div>
-            
-            <p class="text-sm text-slate-400 mb-2 font-semibold text-center uppercase tracking-wider">Enter 6-Digit Provisioning ID:</p>
-            <input type="text" id="pair-code-input" placeholder="A1B2C3" maxlength="6" class="w-full text-center text-4xl tracking-[0.25em] font-mono border-2 border-slate-800 bg-slate-900 rounded-2xl p-5 mb-6 outline-none focus:border-indigo-600 focus:bg-slate-950 focus:ring-4 focus:ring-cyan-500/10 transition-all uppercase text-slate-50 font-bold shadow-inner">
-            
-            <div class="flex gap-4 w-full">
-                <button onclick="document.getElementById('pair-modal').classList.add('hidden')" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl transition-colors border border-slate-800">
-                    Cancel
-                </button>
-                <button onclick="pairBand()" class="w-1/2 bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-[0_0_20px_rgba(6,182,212,0.5)]">
-                    Connect
-                </button>
-            </div>
-        </div>
+    
     </div>
 
 
     <script>
+        localStorage.setItem('cortex_device_id', 'CORTEX-DEMO');
         const API_URL = 'https://cortex-saas-platform.pages.dev/api';
         
         async function fetchCart() {
@@ -400,6 +372,7 @@ var historyHtml = `<!DOCTYPE html>
     
 
     <script>
+        localStorage.setItem('cortex_device_id', 'CORTEX-DEMO');
         const API_URL = 'https://cortex-saas-platform.pages.dev/api';
         
         async function loadHistory() {
